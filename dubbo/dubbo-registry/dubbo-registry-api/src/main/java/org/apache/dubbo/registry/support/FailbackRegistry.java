@@ -47,16 +47,16 @@ import static org.apache.dubbo.registry.Constants.REGISTRY_RETRY_PERIOD_KEY;
  */
 public abstract class FailbackRegistry extends AbstractRegistry {
 
-    /*  retry task map */
-
+    /*  retry task map */  //失败重试机制
+    //发起注册失败的url集合
     private final ConcurrentMap<URL, FailedRegisteredTask> failedRegistered = new ConcurrentHashMap<URL, FailedRegisteredTask>();
-
+    //取消注册失败的url集合
     private final ConcurrentMap<URL, FailedUnregisteredTask> failedUnregistered = new ConcurrentHashMap<URL, FailedUnregisteredTask>();
-
+    //发起订阅失败的监听器集合
     private final ConcurrentMap<Holder, FailedSubscribedTask> failedSubscribed = new ConcurrentHashMap<Holder, FailedSubscribedTask>();
-
+    //发起取消订阅失败的监听器集合
     private final ConcurrentMap<Holder, FailedUnsubscribedTask> failedUnsubscribed = new ConcurrentHashMap<Holder, FailedUnsubscribedTask>();
-
+    //通知失败的url集合
     private final ConcurrentMap<Holder, FailedNotifiedTask> failedNotified = new ConcurrentHashMap<Holder, FailedNotifiedTask>();
 
     /**
@@ -64,7 +64,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
      */
     private final int retryPeriod;
 
-    // Timer for failure retry, regular check if there is a request for failure, and if there is, an unlimited retry
+    // Timer for failure retry, regular check if there is a request for failure, and if there is, an unlimited retry  定时器，用于重试机制
     private final HashedWheelTimer retryTimer;
 
     public FailbackRegistry(URL url) {
@@ -286,7 +286,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         }
     }
 
-    /**
+    /**   重写了subscribe的方法,但只实现了订阅的大体逻辑和异常处理等通用性的东西，具体如何订阅，交给继承的子类实现。这也是模板模式的具体实现。
      * subscribe方法调用时，进入FailbackRegistry方法中。在该类中，会订阅对应的消息，同时对失败的消息进行定时重试。
      * @param url
      * @param listener
@@ -298,7 +298,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         removeFailedSubscribed(url, listener);
         try {
             // Sending a subscription request to the server side
-            // 向服务器端发送订阅请求
+            // 向服务器端发送订阅请求   此处调用了模板方法，交由子类自行实现
             doSubscribe(url, listener);
         } catch (Exception e) {
             Throwable t = e;
@@ -324,7 +324,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             }
 
             // Record a failed registration request to a failed list, retry regularly
-            // 将失败的订阅请求记录到失败列表，定时重试
+            // 将失败的订阅请求记录到失败列表，定时重试 ！！！！！！ 失败重试机制
             addFailedSubscribed(url, listener);
         }
     }
@@ -411,7 +411,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         retryTimer.stop();
     }
 
-    // ==== Template method ====
+    // ==== Template method ==== 四个未实现的抽象模板方法，交给子类去实现用。
 
     public abstract void doRegister(URL url);
 

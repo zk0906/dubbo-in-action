@@ -383,6 +383,7 @@ public abstract class AbstractRegistry implements Registry {
 
     /**
      * Notify changes from the Provider side.
+     * 封装了更新内存缓存和更新文件缓存的逻辑。当客户端第一次订阅时获取全量数据，或者后续由于订阅得到新数据时，都会调用该方法进行保存。
      *
      * @param url      consumer side url
      * @param listener listener
@@ -427,6 +428,7 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    //缓存的保存有同步和异步两种方式
     private void saveProperties(URL url) {
         if (file == null) {
             return;
@@ -447,9 +449,9 @@ public abstract class AbstractRegistry implements Registry {
             }
             properties.setProperty(url.getServiceKey(), buf.toString());
             long version = lastCacheChanged.incrementAndGet();
-            if (syncSaveFile) {
+            if (syncSaveFile) {//同步缓存
                 doSaveProperties(version);
-            } else {
+            } else {//异步缓存，放入线程池。会传入一个AtomicLong的版本号，保证数据是最新的。
                 registryCacheExecutor.execute(new SaveProperties(version));
             }
         } catch (Throwable t) {

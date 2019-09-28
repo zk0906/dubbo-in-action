@@ -43,6 +43,6 @@ public interface RegistryFactory {
      * @return Registry reference, never return empty value
      */
     @Adaptive({"protocol"})
-    Registry getRegistry(URL url);
+    Registry getRegistry(URL url);//aop中获取参数，决定使用哪一个子类实现
 
 }
